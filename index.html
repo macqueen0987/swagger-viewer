@@ -6,51 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css" />
   <style>
-    body { margin: 0; font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; }
-    #top-bar {
-      display: flex;
-      gap: 8px;
-      padding: 8px 12px;
-      background: #111827;
-      color: #e5e7eb;
-      align-items: center;
-      font-size: 12px;
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
     }
-    #top-bar input, #top-bar textarea {
-      background: #111827;
-      border: 1px solid #374151;
-      color: #e5e7eb;
-      padding: 4px 6px;
-      font-size: 11px;
-      border-radius: 4px;
-      font-family: monospace;
+    #swagger-ui {
+      height: 100vh;
     }
-    #top-bar textarea {
-      width: 380px;
-      height: 40px;
-      resize: vertical;
-    }
-    #top-bar button {
-      padding: 4px 10px;
-      border-radius: 4px;
-      border: none;
-      background: #2563eb;
-      color: #f9fafb;
-      cursor: pointer;
-      font-size: 11px;
-    }
-    #top-bar button:hover { background: #1d4ed8; }
-    #swagger-ui { height: calc(100vh - 56px); }
   </style>
 </head>
 <body>
-<!-- <div id="top-bar">
-  <span><b>Swagger Viewer</b></span>
-  <span>| ?spec=base64(JSON) 또는 URL 지원</span>
-  <textarea id="spec-base64" placeholder="Base64 인코딩된 OpenAPI JSON"></textarea>
-  <input id="spec-url" type="text" placeholder="또는 OpenAPI URL (/docs/pr/9/openapi.json 등)" />
-  <button id="load-btn">Load</button>
-</div> -->
 <div id="swagger-ui"></div>
 
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
@@ -83,55 +48,25 @@
     const specParam = params.get('spec');
     const v = params.get('v') || '';
 
-    if (!specParam) return false;
+    if (!specParam) {
+      document.getElementById('swagger-ui').innerHTML =
+        '<div style="padding:16px;font-family:system-ui;">spec 파라미터가 없습니다.<br>예: ?spec=https://raw.githubusercontent.com/OWNER/REPO/openapi-jsons/openapi.json</div>';
+      return;
+    }
 
-    // 1) Base64 JSON 시도
+    // 1) Base64 JSON 시도 (짧은 spec용, 실패하면 그냥 URL로 간주)
     const asJson = decodeBase64Json(specParam);
     if (asJson) {
       createUI({ spec: asJson });
-      return true;
+      return;
     }
 
-    // 2) 아니면 URL로 간주
+    // 2) URL로 처리
     const url = withVersion(specParam, v);
     createUI({ url });
-    return true;
   }
 
-  function loadFromInputs() {
-    const b64 = document.getElementById('spec-base64').value;
-    const urlInput = document.getElementById('spec-url').value.trim();
-
-    if (b64) {
-      const json = decodeBase64Json(b64);
-      if (!json) {
-        alert('Base64 JSON 디코딩 실패');
-        return;
-      }
-      createUI({ spec: json });
-      return;
-    }
-
-    if (urlInput) {
-      createUI({ url: urlInput });
-      return;
-    }
-
-    alert('Base64 또는 URL 중 하나를 입력하세요.');
-  }
-
-  document.getElementById('load-btn').addEventListener('click', function (e) {
-    e.preventDefault();
-    loadFromInputs();
-  });
-
-  // 기본 동작: ?spec= 이 있으면 자동 로드, 없으면 빈 화면 + 상단 입력창
-  window.addEventListener('load', function () {
-    if (!loadFromQuery()) {
-      // 아무 파라미터 없으면 사용자가 직접 입력해서 로드
-      // 원하면 여기서 기본 예시 URL을 넣어줄 수도 있음.
-    }
-  });
+  window.addEventListener('load', loadFromQuery);
 </script>
 </body>
 </html>
